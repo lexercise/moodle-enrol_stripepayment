@@ -32,10 +32,15 @@
 define('NO_DEBUG_DISPLAY', true);
 
 require("../../config.php");
+
 require_once("lib.php");
 require_once($CFG->libdir.'/eventslib.php');
 require_once($CFG->libdir.'/enrollib.php');
 require_once($CFG->libdir . '/filelib.php');
+
+
+//RJH - fetch profile data
+require_once($CFG->dirroot.'/user/profile/lib.php');
 
 require_login();
 // Stripe does not like when we return error messages here,
@@ -48,6 +53,7 @@ if (empty(required_param('stripeToken', PARAM_RAW))) {
 }
 
 $data = new stdClass();
+
 $data->cmd = required_param('cmd', PARAM_RAW);
 $data->charset = required_param('charset', PARAM_RAW);
 $data->item_name = required_param('item_name', PARAM_TEXT);
@@ -99,7 +105,6 @@ if (! $context = context_course::instance($course->id, IGNORE_MISSING)) {
 
 $PAGE->set_context($context);
 
-
 if (! $plugininstance = $DB->get_record("enrol", array("id" => $data->instanceid, "status" => 0))) {
     message_stripepayment_error_to_admin("Not a valid instance id", $data);
     redirect($CFG->wwwroot);
@@ -124,41 +129,33 @@ if ( (float) $plugininstance->cost <= 0 ) {
 // Use the same rounding of floats as on the enrol form.
 $cost = format_float($cost, 2, false);
 
-// Let's say each article costs 15.00 bucks.
+//RJH - Fetch additional profile data
+profile_load_data($user);
 
 try {
 
-    //require_once('Stripe/lib/Stripe.php');
-    require_once('Stripe/init.php');
+    require_once('Stripe/lib/Stripe.php');
 
-    \Stripe\Stripe::setApiKey($plugin->get_config('secretkey'));
-
-    // Set the proxy if required.
-
-    if (!empty($CFG->proxyhost)) {
-        $proxy = $CFG->proxyhost;
-        if (!empty($CFG->proxyport)) {
-            $proxy .= ':' . $CFG->proxyport;
-        }
-        $curl = new \Stripe\HttpClient\CurlClient(array(CURLOPT_PROXY => $proxy));
-        // tell Stripe to use the tweaked client
-        \Stripe\ApiRequestor::setHttpClient($curl);
-    }
-
-    $charge1 = \Stripe\Customer::create(array(
+    Stripe::setApiKey($plugin->get_config('secretkey'));
+    $charge1 = Stripe_Customer::create(array(
         "email" => required_param('stripeEmail', PARAM_EMAIL),
         "description" => get_string('charge_description1', 'enrol_stripepayment')
     ));
-    
-    $charge = \Stripe\Charge::create(array(
+    $charge = Stripe_Charge::create(array(
       "amount" => $cost * 100,
       "currency" => $plugininstance->currency,
       "card" => required_param('stripeToken', PARAM_RAW),
       "description" => get_string('charge_description2', 'enrol_stripepayment'),
-      "receipt_email" => required_param('stripeEmail', PARAM_EMAIL)
+      "receipt_email" => required_param('stripeEmail', PARAM_EMAIL),
+      "expand" => array("balance_transaction")
     ));
+
+//  var_dump($charge->__toArray(true));
+//  exit;
+
     // Send the file, this line will be reached if no error was thrown above.
-    $data->txn_id = $charge->balance_transaction;
+    //RJH - We had to expand the balance transaction
+    $data->txn_id = $charge->balance_transaction->id;
     $data->tax = $charge->amount / 100;
     $data->memo = $charge->id;
     $data->payment_status = $charge->status;
@@ -179,6 +176,34 @@ try {
 
     // Enrol user.
     $plugin->enrol_user($plugininstance, $user->id, $plugininstance->roleid, $timestart, $timeend);
+
+    // TODO: RJH - Build data for app.lexercise
+    $lex_data = array(
+      'customer' => $charge1->__toArray(true),
+      'charge' => $charge->__toArray(true),
+      'description' => "{$course->id}:{$course->fullname}"
+    );
+
+    if (!empty($user->profile_field_lexerciseid)) {
+      $lex_data['clinician_id'] = $user->profile_field_lexerciseid;
+
+      $data_string = json_encode($lex_data);
+
+      //TODO: RJH - Send data to app.lexercise
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+      curl_setopt($ch, CURLOPT_URL, $CFG->lexercise_domain . "/services/clinicians/transaction");
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'x-api-key: ' . $CFG->lexercise_api_key,
+        'Content-Type: application/json'
+      ));
+      curl_setopt($ch, CURLOPT_VERBOSE, true);
+
+      $output = curl_exec($ch);
+      curl_close($ch);
+    }
 
     // Pass $view=true to filter hidden caps if the user cannot see them.
     if ($users = get_users_by_capability($context, 'moodle/course:update', 'u.*', 'u.id ASC',
