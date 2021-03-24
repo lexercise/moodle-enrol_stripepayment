@@ -222,6 +222,43 @@ try {
     // Enrol user.
     $plugin->enrol_user($plugininstance, $user->id, $plugininstance->roleid, $timestart, $timeend);
 
+    // RJH - Build data for app.lexercise
+    // Grab the extra user profile data
+    require_once("$CFG->dirroot/user/profile/lib.php");
+    $profile = profile_user_record($user->id);
+
+    $charge_id = $charge->charges->data[0]->id;
+    $stripe_charge = \Stripe\Charge::retrieve([
+      'id' => $charge_id,
+      'expand' => ['balance_transaction'],
+    ]);
+
+    if ($profile && $profile->lexerciseid) {
+      $lex_data = [
+        'charge' => $stripe_charge,
+        'description' => "Clinician #{$profile->lexerciseid}, Course Enrollment: \"{$course->fullname}\"",
+        'clinician_id' => $profile->lexerciseid
+      ];
+
+      $data_string = json_encode($lex_data);
+
+      //RJH - Send data to app.lexercise
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+      curl_setopt($ch, CURLOPT_URL, $CFG->lexercise_domain . "/services/clinicians/transaction");
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'x-api-key: ' . $CFG->lexercise_api_key,
+        'Content-Type: application/json'
+      ));
+      curl_setopt($ch, CURLOPT_VERBOSE, true);
+
+      $output = curl_exec($ch);
+      curl_close($ch);
+    }
+    // RJH - End of sending to app.lexercise
+
     // Pass $view=true to filter hidden caps if the user cannot see them.
     if ($users = get_users_by_capability($context, 'moodle/course:update', 'u.*', 'u.id ASC',
                                              '', '', '', '', false, true)) {

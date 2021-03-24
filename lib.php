@@ -257,7 +257,8 @@ class enrol_stripepayment_plugin extends enrol_plugin {
                 echo '</div>';
             } else {
                 // Sanitise some fields before building the Stripe form.
-                $coursefullname  = format_string($course->fullname, true, array('context' => $context));
+                // RJH: Update the name of the charge for Stripe email notifications
+                $coursefullname  = 'Enrollment charge for '.format_string($course->fullname, true, array('context' => $context));
                 $courseshortname = $shortname;
                 $userfullname    = fullname($USER);
                 $userfirstname   = $USER->firstname;
