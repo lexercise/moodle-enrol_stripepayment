@@ -90,6 +90,17 @@ class enrol_stripepayment_edit_form extends moodleform {
         $mform->setDefault('enrolenddate', 0);
         $mform->addHelpButton('enrolenddate', 'enrolenddate', 'enrol_stripepayment');
 
+        // RJH - 03/23/21
+        $options = $this->get_expirynotify_options();
+        $mform->addElement('select', 'expirynotify', get_string('expirynotify', 'core_enrol'), $options);
+        $mform->addHelpButton('expirynotify', 'expirynotify', 'core_enrol');
+
+        $options = array('optional' => false, 'defaultunit' => 86400);
+        $mform->addElement('duration', 'expirythreshold', get_string('expirythreshold', 'core_enrol'), $options);
+        $mform->addHelpButton('expirythreshold', 'expirythreshold', 'core_enrol');
+        $mform->disabledIf('expirythreshold', 'expirynotify', 'eq', 0);
+        // RJH - 03/23/21
+
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
@@ -127,5 +138,19 @@ class enrol_stripepayment_edit_form extends moodleform {
         }
 
         return $errors;
+    }
+
+    /**
+     * Return an array of valid options for the expirynotify.
+     *  RJH - 03/23/21
+     * @return array
+     */
+    protected function get_expirynotify_options() {
+      $options = array(
+        0 => get_string('no'),
+        1 => get_string('expirynotifyenroller', 'core_enrol'),
+        2 => get_string('expirynotifyall', 'core_enrol')
+      );
+      return $options;
     }
 }

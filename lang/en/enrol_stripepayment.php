@@ -82,5 +82,19 @@ $string['invalidcouponcode'] = 'Invalid Coupon Code';
 $string['invalidcouponcodevalue'] = 'Coupon Code {$a} is not valid!';
 $string['enrol'] = 'Enrol';
 
+// RJH - 03/23/21
+$string['expirymessageenrollersubject'] = 'Enrolment expiry notification';
+$string['expirymessageenrollerbody'] = 'Enrolment in the course \'{$a->course}\' will expire within the next {$a->threshold} for the following users:
+
+{$a->users}
+
+To extend their enrolment, go to {$a->extendurl}';
+$string['expirymessageenrolledsubject'] = 'Enrolment expiry notification';
+$string['expirymessageenrolledbody'] = 'Dear {$a->user},
+
+This is a notification that your enrolment in the course \'{$a->course}\' is due to expire on {$a->timeend}.
+
+If you need help, please contact {$a->enroller}.';
+
 
 

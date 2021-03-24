@@ -87,4 +87,19 @@ if (is_siteadmin()) {
 
     $settings->add(new admin_setting_configduration('enrol_stripepayment/enrolperiod',
         get_string('enrolperiod', 'enrol_stripepayment'), get_string('enrolperiod_desc', 'enrol_stripepayment'), 0));
+
+    // RJH - Expiration notifications 3/23/2021
+    $options = array();
+    for ($i=0; $i<24; $i++) {
+      $options[$i] = $i;
+    }
+    $settings->add(new admin_setting_configselect('enrol_stripepayment/expirynotifyhour',
+      get_string('expirynotifyhour', 'core_enrol'), '', 6, $options));
+
+    $options = array(0 => get_string('no'), 1 => get_string('expirynotifyenroller', 'core_enrol'), 2 => get_string('expirynotifyall', 'core_enrol'));
+    $settings->add(new admin_setting_configselect('enrol_manual/expirynotify',
+      get_string('expirynotify', 'core_enrol'), get_string('expirynotify_help', 'core_enrol'), 0, $options));
+
+    $settings->add(new admin_setting_configduration('enrol_manual/expirythreshold',
+      get_string('expirythreshold', 'core_enrol'), get_string('expirythreshold_help', 'core_enrol'), 86400, 86400));
 }

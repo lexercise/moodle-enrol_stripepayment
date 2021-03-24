@@ -15,17 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Defines message providers (types of message sent) for the Stripe enrolment plugin.
- *
- * @package    enrol_stripepayment
- * @copyright  2019 Dualcube Team
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Task definition for enrol_stripepayment.
+ * @author    Ryan Halferty <rhalferty@bit9labs.com>
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$messageproviders = array(
-  'stripepayment_enrolment' => array(),
-  'expiry_notification' => array(),  // RJH - 03/23/21
+$tasks = array(
+    array(
+        'classname' => '\enrol_stripepayment\task\send_expiry_notifications',
+        'blocking' => 0,
+        'minute' => '*/10',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+        'disabled' => 0
+    )
 );
 

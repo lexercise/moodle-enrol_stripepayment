@@ -80,6 +80,13 @@ if ($mform->is_cancelled()) {
         $instance->enrolstartdate = $data->enrolstartdate;
         $instance->enrolenddate   = $data->enrolenddate;
         $instance->timemodified   = time();
+
+        // RJH - 03/23/21
+        $instance->expirynotify    = $data->expirynotify;
+        $instance->expirythreshold = $data->expirythreshold;
+        $instance->notifyall       = $data->expirynotify == 2 ? 1 : 0;
+        // RJH - 03/23/21
+
         $DB->update_record('enrol', $instance);
 
         if ($reset) {
