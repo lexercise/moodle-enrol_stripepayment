@@ -151,7 +151,7 @@ try {
         $checkcustomer = $valuedata;
     }
 
-    if (!$checkcustomer) {
+    if (!$checkcustomer || strpos($checkcustomer->receiver_id, "cus_") === false) {
         $customerarray = array("email" => $data->stripeEmail,
         "description" => get_string('charge_description1', 'enrol_stripepayment'));
         if ($iscoupon) {
