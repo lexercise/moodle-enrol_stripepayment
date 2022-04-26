@@ -393,6 +393,9 @@ class moodle_enrol_stripepayment_external extends external_api {
                 ) 
             );
             // Create new Checkout Session for the order 
+            //RJH - Email redirect hack
+            $description = "Enrollment charge for " . $description;
+            
             try {
                 $session = \Stripe\Checkout\Session::create([ 
                     'payment_method_types' => ['card'], 
