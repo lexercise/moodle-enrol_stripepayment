@@ -617,7 +617,9 @@ class moodle_enrol_stripepayment_external extends external_api {
               $lex_data = [
                 'charge' => $stripe_charge,
                 'description' => "Clinician #{$profile->lexerciseid}, Course Enrollment: \"{$course->fullname}\"",
-                'clinician_id' => $profile->lexerciseid
+                'clinician_id' => $profile->lexerciseid,
+                'course' => $course->fullname,
+                'course_id' => $courseid
               ];
 
               $data_string = json_encode($lex_data);
