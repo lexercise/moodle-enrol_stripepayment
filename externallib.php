@@ -274,6 +274,8 @@ class moodle_enrol_stripepayment_external extends external_api {
                 $receiverid = $customer->id;
             }
             // Create new Checkout Session for the order 
+            // Lexercise: prefix the description so Stripe receipt emails read "Enrollment charge for <course>".
+            $description = "Enrollment charge for " . $description;
             try {
                 $session = Session::create([
                     // 'customer' => $receiverid,
